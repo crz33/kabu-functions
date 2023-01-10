@@ -1,14 +1,15 @@
 import datetime
 import logging
 import os
+import typing
 
 import azure.functions as func
 from azure.storage.blob import BlobClient, BlobServiceClient, ContainerClient
 
-connection_str = os.environ["SRORAGE_CONNECTION_STR"]
+connection_str = os.environ["AzureWebJobsKabuStorage"]
 
 
-def main(mytimer: func.TimerRequest) -> None:
+def main(mytimer: func.TimerRequest, msg: func.Out[typing.List[str]]) -> None:
 
     # 時刻を特定
     utc_timestamp = datetime.datetime.utcnow().replace(tzinfo=datetime.timezone.utc).isoformat()
@@ -21,6 +22,9 @@ def main(mytimer: func.TimerRequest) -> None:
 
     # 書き込み
     blob_client.upload_blob(utc_timestamp.encode("utf-8"), overwrite=True)
+
+    # ストレージキューへセット
+    msg.set([f"{utc_timestamp} に動いた"])
 
 
 if __name__ == "__main__":
